@@ -285,7 +285,17 @@ def loop():
             args = command.split(' ')
 
             if args[0].lower() in ['help', 'commands']:
-                pass
+                print('items                            lists all items that you should be looking out for in your raids')
+                print('quests                           lists all quests that have not been completed')
+                print('info <item>                      gives you information on how much of <item> you still need to collect.')
+                print('add <qty> <fir (y/n)> <item>     adds <qty> of <item> with <fir> status to your inventory')
+                print('sub <qty> <fir (y/n)> <item>     removes <qty> of <item> with <fir> status to your inventory')
+                print('set <qty> <fir (y/n)> <item>     sets <qty> of <item> with <fir> status to your inventory')
+                print('complete <quest>                 completes <quest> and removes appropriate items from your inventory')
+                print('ignore <quets>                   completes <quest> without removing any items from your inventory')
+                print('restart <quest>                  re-activates a <quest> in case you miss-typed')
+                print('wipe                             COMPLETELY removes all progres. to be used when there\'s a wipe in tarkov')
+                print('stop                             stops the program')
             elif args[0].lower() == 'items':
                 items()
             elif args[0].lower() == 'quests':
