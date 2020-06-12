@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # mine
-*.db
+backup.db

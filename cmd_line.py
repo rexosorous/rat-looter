@@ -5,7 +5,6 @@ db = conn.cursor()
 
 
 
-# error handling for incorrect number of inputs and unable to find item
 
 
 
@@ -69,7 +68,7 @@ def set(qty: int, fir: int, item: str):
 
 
 def complete(mission: str):
-    # check if the quest is laready completed
+    # check if the quest is already completed
     db.execute('SELECT name FROM quests WHERE name LIKE ? AND completed=1', (f'%{mission}%',))
     if (quest := db.fetchone()):
         print(f'you have already completed the quest: {quest[0]}')
