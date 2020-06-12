@@ -8,28 +8,31 @@ db = conn.cursor()
 def items():
     '''Shows a list of every item to be looking out for.
     '''
-    db.execute('''  SELECT  items.full_name
-                    FROM items
-                    INNER JOIN inventory
-                    ON inventory.item=items.id
-                    INNER JOIN
-                    (
-                        SELECT  SUM(recipes.qty) AS qty,
-                                SUM(recipes.fir) AS fir,
-                                recipes.item
-                        FROM recipes
-                        INNER JOIN quests
-                        ON quests.id=recipes.quest
-                        WHERE quests.completed=0
-                        GROUP BY recipes.item
-                    ) AS temp
-                    ON temp.item=items.id
-                    WHERE
-                    (
-                        (inventory.fir < temp.fir)
-                        OR (inventory.qty+inventory.fir < temp.qty+temp.fir)
-                        OR (inventory.qty+inventory.fir-temp.fir < temp.qty)
-                    )''')
+    db.execute('''
+        SELECT  items.full_name
+        FROM items
+        INNER JOIN inventory
+        ON inventory.item=items.id
+        INNER JOIN
+        (
+            SELECT  SUM(recipes.qty) AS qty,
+                    SUM(recipes.fir) AS fir,
+                    recipes.item
+            FROM recipes
+            INNER JOIN quests
+            ON quests.id=recipes.quest
+            WHERE quests.completed=0
+            GROUP BY recipes.item
+        ) AS temp
+        ON temp.item=items.id
+        WHERE
+        (
+            (inventory.fir < temp.fir)
+            OR (inventory.qty+inventory.fir < temp.qty+temp.fir)
+            OR (inventory.qty+inventory.fir-temp.fir < temp.qty)
+        )
+    ''')
+
     data = db.fetchall()
     for entry in data:
         print(entry)
@@ -44,7 +47,31 @@ def info(item: str):
     Args:
         item (str): the item to get info on
     '''
-    db.execute('SELECT items.full_name, inventory.qty, inventory.fir, SUM(recipes.qty), SUM(recipes.fir) FROM items INNER JOIN recipes ON recipes.item=items.id INNER JOIN inventory ON inventory.item=items.id INNER JOIN quests ON quests.id=recipes.quest WHERE quests.completed=0 AND (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('''
+        SELECT  items.full_name,
+                inventory.qty,
+                inventory.fir,
+                SUM(recipes.qty),
+                SUM(recipes.fir)
+        FROM items
+        INNER JOIN recipes
+        ON recipes.item=items.id
+        INNER JOIN inventory
+        ON inventory.item=items.id
+        INNER JOIN quests
+        ON quests.id=recipes.quest
+        WHERE
+        (
+            quests.completed=0
+            AND
+            (
+                full_name LIKE ?
+                OR short_name LIKE ?
+                OR alt_name LIKE ?
+            )
+        )
+     ''', (f'%{item}%', f'%{item}%', f'%{item}%'))
+
     data = list(db.fetchone())
 
     need = [data[3]-data[1], data[4]-data[2]]
@@ -72,7 +99,21 @@ def add(qty: int, fir: int, item: str):
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
 
-    db.execute('SELECT inventory.qty, inventory.fir, items.id FROM inventory INNER JOIN items ON inventory.item=items.id WHERE (items.full_name LIKE ? OR items.short_name LIKE ? OR items.alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('''
+        SELECT  inventory.qty,
+                inventory.fir,
+                items.id
+        FROM inventory
+        INNER JOIN items
+        ON inventory.item=items.id
+        WHERE
+        (
+            items.full_name LIKE ?
+            OR items.short_name LIKE ?
+            OR items.alt_name LIKE ?
+        )
+    ''', (f'%{item}%', f'%{item}%', f'%{item}%'))
+
     inv = list(db.fetchone())
     inv[fir] += qty
     if inv[fir] < 0:
@@ -97,7 +138,21 @@ def set(qty: int, fir: int, item: str):
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
 
-    db.execute('SELECT inventory.qty, inventory.fir, items.id FROM inventory INNER JOIN items ON inventory.item=items.id WHERE (items.full_name LIKE ? OR items.short_name LIKE ? OR items.alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('''
+        SELECT  inventory.qty,
+                inventory.fir,
+                items.id
+        FROM inventory
+        INNER JOIN items
+        ON inventory.item=items.id
+        WHERE
+        (
+            items.full_name LIKE ?
+            OR items.short_name LIKE ?
+            OR items.alt_name LIKE ?
+        )
+    ''', (f'%{item}%', f'%{item}%', f'%{item}%'))
+
     inv = list(db.fetchone())
     inv[fir] = qty
 
@@ -125,7 +180,16 @@ def complete(mission: str):
     db.execute('UPDATE quests SET completed=1 WHERE name LIKE ?', (f'%{mission}%',))
 
     # update inventory
-    db.execute('SELECT recipes.item, recipes.qty, recipes.fir FROM recipes INNER JOIN quests ON quests.id=recipes.quest WHERE quests.name LIKE ?', (f'%{mission}%',))
+    db.execute('''
+        SELECT  recipes.item,
+                recipes.qty,
+                recipes.fir
+        FROM recipes
+        INNER JOIN quests
+        ON quests.id=recipes.quest
+        WHERE quests.name LIKE ?
+    ''', (f'%{mission}%',))
+
     recipes = db.fetchall()
     for entry in recipes:
         db.execute('SELECT inventory.qty, inventory.fir FROM inventory INNER JOIN items ON inventory.item=items.id WHERE items.id=?', (entry[0],))
