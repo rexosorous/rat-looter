@@ -70,9 +70,9 @@ def set(qty: int, fir: int, item: str):
 
 def complete(mission: str):
     # check if the quest is laready completed
-    db.execute('SELECT completed FROM quests WHERE name LIKE ? AND completed=1', (f'%{mission}%',))
-    if db.fetchone():
-        print('you have already completed that quest.')
+    db.execute('SELECT name FROM quests WHERE name LIKE ? AND completed=1', (f'%{mission}%',))
+    if (quest := db.fetchone()):
+        print(f'you have already completed the quest: {quest[0]}')
         return
 
     db.execute('UPDATE quests SET completed=1 WHERE name LIKE ?', (f'%{mission}%',))
@@ -94,6 +94,9 @@ def complete(mission: str):
 
         db.execute('UPDATE inventory SET qty=?, fir_qty=? WHERE item=?', (inv[0], inv[1], entry[0]))
 
+    db. execute('SELECT name FROM quests WHERE name LIKE ?', (f'%{mission}%',))
+    quest = db.fetchone()
+    print(f'completed quest: {quest[0]}')
     conn.commit()
 
 
@@ -128,9 +131,11 @@ def loop():
             else:
                 print('unknown command')
         except TypeError:
-            print('error: please check your spelling')
+            print('error: that quest or item doesn\'t exist or you misspelled something.')
+            print('       periods and spaces must be included in.')
+            print('       if it\'s a quest name, it must be exactly as it appears in game.')
         except ValueError:
-            print('error: incorrect syntax')
+            print('error: incorrect syntax.')
         finally:
             print('\n\n\n')
 
