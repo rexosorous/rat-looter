@@ -39,6 +39,19 @@ def items():
 
 
 
+def quests():
+    '''Shows a list of all quests that are yet to be completed
+
+    Note:
+        Does not include quests that don't have items to turn in.
+    '''
+    db.execute('''SELECT name FROM quests WHERE completed=0''')
+    data = db.fetchall()
+    for entry in data:
+        print(entry)
+
+
+
 def info(item: str):
     '''Shows info regarding the quantities of an item.
 
@@ -119,7 +132,7 @@ def add(qty: int, fir: int, item: str):
     if inv[fir] < 0:
         inv[fir] = 0
 
-    db.execute('UPDATE inventory SET qty=?, fir=? WHERE item=?', (inv[0], inv[1], inv[2]))
+    db.execute('''UPDATE inventory SET qty=?, fir=? WHERE item=?''', (inv[0], inv[1], inv[2]))
 
     conn.commit()
     info(item)
@@ -156,7 +169,7 @@ def set(qty: int, fir: int, item: str):
     inv = list(db.fetchone())
     inv[fir] = qty
 
-    db.execute('UPDATE inventory SET qty=?, fir=? WHERE item=?', (inv[0], inv[1], inv[2]))
+    db.execute('''UPDATE inventory SET qty=?, fir=? WHERE item=?''', (inv[0], inv[1], inv[2]))
 
     conn.commit()
     info(item)
@@ -172,12 +185,12 @@ def complete(mission: str):
         mission (str): the mission to complete. MUST BE AS CLOSE AS POSSIBLE to the text in game
     '''
     # check if the quest is already completed
-    db.execute('SELECT name FROM quests WHERE name LIKE ? AND completed=1', (f'%{mission}%',))
+    db.execute('''SELECT name FROM quests WHERE name LIKE ? AND completed=1''', (f'%{mission}%',))
     if (quest := db.fetchone()):
         print(f'you have already completed the quest: {quest[0]}')
         return
 
-    db.execute('UPDATE quests SET completed=1 WHERE name LIKE ?', (f'%{mission}%',))
+    db.execute('''UPDATE quests SET completed=1 WHERE name LIKE ?''', (f'%{mission}%',))
 
     # update inventory
     db.execute('''
@@ -192,7 +205,7 @@ def complete(mission: str):
 
     recipes = db.fetchall()
     for entry in recipes:
-        db.execute('SELECT inventory.qty, inventory.fir FROM inventory INNER JOIN items ON inventory.item=items.id WHERE items.id=?', (entry[0],))
+        db.execute('''SELECT inventory.qty, inventory.fir FROM inventory INNER JOIN items ON inventory.item=items.id WHERE items.id=?''', (entry[0],))
         inv = list(db.fetchone())
         inv[entry[2]] -= entry[1]
 
@@ -203,9 +216,9 @@ def complete(mission: str):
                     inv[1] = 0
             inv[entry[2]] = 0
 
-        db.execute('UPDATE inventory SET qty=?, fir=? WHERE item=?', (inv[0], inv[1], entry[0]))
+        db.execute('''UPDATE inventory SET qty=?, fir=? WHERE item=?''', (inv[0], inv[1], entry[0]))
 
-    db. execute('SELECT name FROM quests WHERE name LIKE ?', (f'%{mission}%',))
+    db. execute('''SELECT name FROM quests WHERE name LIKE ?''', (f'%{mission}%',))
     quest = db.fetchone()
     print(f'completed quest: {quest[0]}')
     conn.commit()
@@ -227,8 +240,7 @@ def loop():
             elif args[0].lower() == 'items':
                 items()
             elif args[0].lower() == 'quests':
-                # quests()
-                pass
+                quests()
             elif args[0].lower() == 'info':
                 info(' '.join(args[1:]))
             elif args[0].lower() == 'add':
