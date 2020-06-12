@@ -225,6 +225,21 @@ def complete(mission: str):
 
 
 
+def ignore(mission: str):
+    '''Removes a mission from the requirements consideration.
+
+    Does this without removing items from your inventory.
+    So if you wanted to no longer care about completing a certain quest like "Farming. Part 4" which requires you to turn in GPUs,
+    then you can ignore it so you'll no longer be reminded about needing to collect its items.
+    '''
+    db.execute('''UPDATE quests SET completed=1 WHERE name LIKE ?''', (f'%{mission}%',))
+    db.execute('''SELECT name FROM quests WHERE name LIKE ?''', (f'%{mission}%',))
+    quest = db.fetchone()
+    print(f'ignored quest: {quest[0]}')
+    conn.commit()
+
+
+
 def loop():
     '''Main logic loop.
 
@@ -261,8 +276,7 @@ def loop():
             elif args[0].lower() == 'complete':
                 complete(' '.join(args[1:]))
             elif args[0].lower() == 'ignore':
-                # ignore(' '.join(args[1:]))
-                pass
+                ignore(' '.join(args[1:]))
             elif args[0].lower() == 'restart':
                 # restart(' '.join(args[1:]))
                 pass
