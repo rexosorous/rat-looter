@@ -231,11 +231,28 @@ def ignore(mission: str):
     Does this without removing items from your inventory.
     So if you wanted to no longer care about completing a certain quest like "Farming. Part 4" which requires you to turn in GPUs,
     then you can ignore it so you'll no longer be reminded about needing to collect its items.
+
+    Args:
+        mission (str): the mission to ignore
     '''
     db.execute('''UPDATE quests SET completed=1 WHERE name LIKE ?''', (f'%{mission}%',))
     db.execute('''SELECT name FROM quests WHERE name LIKE ?''', (f'%{mission}%',))
     quest = db.fetchone()
     print(f'ignored quest: {quest[0]}')
+    conn.commit()
+
+
+
+def restart(mission: str):
+    '''Allows you to re-enable a quest that has been completed or ignored
+
+    Args:
+        mission (str): the mission to restart
+    '''
+    db.execute('''UPDATE quests SET completed=0 WHERE name LIKE ?''', (f'%{mission}%',))
+    db.execute('''SELECT name FROM quests WHERE name LIKE ?''', (f'%{mission}%',))
+    quest = db.fetchone()
+    print(f'restarted quest: {quest[0]}')
     conn.commit()
 
 
@@ -278,8 +295,7 @@ def loop():
             elif args[0].lower() == 'ignore':
                 ignore(' '.join(args[1:]))
             elif args[0].lower() == 'restart':
-                # restart(' '.join(args[1:]))
-                pass
+                restart(' '.join(args[1:]))
             elif args[0].lower() == 'wipe':
                 # wipe()
                 pass
