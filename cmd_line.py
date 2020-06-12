@@ -30,7 +30,7 @@ def add(qty: int, fir: int, item: str):
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
 
-    db.execute('SELECT qty, inventory.fir, id FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('SELECT inventory.qty, inventory.fir, items.id FROM inventory INNER JOIN items ON inventory.item=items.id WHERE (items.full_name LIKE ? OR items.short_name LIKE ? OR items.alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
     inv = list(db.fetchone())
     inv[fir] += qty
     if inv[fir] < 0:
@@ -48,7 +48,7 @@ def set(qty: int, fir: int, item: str):
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
 
-    db.execute('SELECT qty, inventory.fir, id FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('SELECT inventory.qty, inventory.fir, items.id FROM inventory INNER JOIN items ON invenotry.item=items.id WHERE (items.full_name LIKE ? OR items.short_name LIKE ? OR items.alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
     inv = list(db.fetchone())
     inv[fir] = qty
 
@@ -69,10 +69,10 @@ def complete(mission: str):
     db.execute('UPDATE quests SET completed=1 WHERE name LIKE ?', (f'%{mission}%',))
 
     # update inventory
-    db.execute('SELECT item, qty, fir FROM recipes INNER JOIN quests ON id=quest WHERE name LIKE ?', (f'%{mission}%',))
+    db.execute('SELECT recipes.item, recipes.qty, recipes.fir FROM recipes INNER JOIN quests ON quest.id=recipes.quest WHERE quest.name LIKE ?', (f'%{mission}%',))
     recipes = db.fetchall()
     for entry in recipes:
-        db.execute('SELECT qty, inventory.fir FROM inventory INNER JOIN items ON item=id WHERE id=?', (entry[0],))
+        db.execute('SELECT inventory.qty, inventory.fir FROM inventory INNER JOIN items ON invenotry.item=items.id WHERE items.id=?', (entry[0],))
         inv = list(db.fetchone())
         inv[entry[2]] -= entry[1]
 
