@@ -9,27 +9,19 @@ db = conn.cursor()
 
 
 def info(item: str):
-    db.execute('SELECT qty, fir_qty, full_name FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
-    inv = list(db.fetchone())
+    db.execute('SELECT items.full_name, inventory.qty, inventory.fir, SUM(recipes.qty), SUM(recipes.fir) FROM items INNER JOIN recipes ON recipes.item=items.id INNER JOIN inventory ON inventory.item=items.id INNER JOIN quests ON quests.id=recipes.quest WHERE quests.completed=0 AND (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    data = list(db.fetchone())
 
-    # get total requirements
-    db.execute('SELECT qty, fir FROM recipes INNER JOIN quests ON quests.id=quest INNER JOIN items ON items.id=item WHERE completed=0 AND (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
-    requirements = db.fetchall()
+    need = [data[3]-data[1], data[4]-data[2]]
+    if need[1] < 0:
+        need[0] += need[1]
+        need[1] = 0
 
-    required = [0, 0]
-    for recipe in requirements:
-        required[recipe[1]] += recipe[0]
-
-    needed = [required[0]-inv[0], required[1]-inv[1]]
-    if needed[1] < 0:
-        needed[0] += needed[1]
-        needed[1] = 0
-
-    print(inv[2])
+    print(data[0])
     print('{space:<10} | {gen:<5} | {fir:<5}'.format(space='', gen='ANY', fir='FIR'))
-    print('{needed:<10} | {gen:<5} | {fir:<5}'.format(needed='find', gen=needed[0], fir=needed[1]))
-    print('{required:<10} | {gen:<5} | {fir:<5}'.format(required='required', gen=required[0], fir=required[1]))
-    print('{owned:<10} | {gen:<5} | {fir:<5}'.format(owned='owned', gen=inv[0], fir=inv[1]))
+    print('{needed:<10} | {gen:<5} | {fir:<5}'.format(needed='find', gen=need[0], fir=need[1]))
+    print('{required:<10} | {gen:<5} | {fir:<5}'.format(required='required', gen=data[3], fir=data[4]))
+    print('{owned:<10} | {gen:<5} | {fir:<5}'.format(owned='owned', gen=data[1], fir=data[2]))
 
 
 
@@ -38,13 +30,13 @@ def add(qty: int, fir: int, item: str):
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
 
-    db.execute('SELECT qty, fir_qty, id FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('SELECT qty, inventory.fir, id FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
     inv = list(db.fetchone())
     inv[fir] += qty
     if inv[fir] < 0:
         inv[fir] = 0
 
-    db.execute('UPDATE inventory SET qty=?, fir_qty=? WHERE item=?', (inv[0], inv[1], inv[2]))
+    db.execute('UPDATE inventory SET qty=?, fir=? WHERE item=?', (inv[0], inv[1], inv[2]))
 
     conn.commit()
     info(item)
@@ -56,11 +48,11 @@ def set(qty: int, fir: int, item: str):
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
 
-    db.execute('SELECT qty, fir_qty, id FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
+    db.execute('SELECT qty, inventory.fir, id FROM inventory INNER JOIN items ON item=id WHERE (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
     inv = list(db.fetchone())
     inv[fir] = qty
 
-    db.execute('UPDATE inventory SET qty=?, fir_qty=? WHERE item=?', (inv[0], inv[1], inv[2]))
+    db.execute('UPDATE inventory SET qty=?, fir=? WHERE item=?', (inv[0], inv[1], inv[2]))
 
     conn.commit()
     info(item)
@@ -80,7 +72,7 @@ def complete(mission: str):
     db.execute('SELECT item, qty, fir FROM recipes INNER JOIN quests ON id=quest WHERE name LIKE ?', (f'%{mission}%',))
     recipes = db.fetchall()
     for entry in recipes:
-        db.execute('SELECT qty, fir_qty FROM inventory INNER JOIN items ON item=id WHERE id=?', (entry[0],))
+        db.execute('SELECT qty, inventory.fir FROM inventory INNER JOIN items ON item=id WHERE id=?', (entry[0],))
         inv = list(db.fetchone())
         inv[entry[2]] -= entry[1]
 
@@ -91,7 +83,7 @@ def complete(mission: str):
                     inv[1] = 0
             inv[entry[2]] = 0
 
-        db.execute('UPDATE inventory SET qty=?, fir_qty=? WHERE item=?', (inv[0], inv[1], entry[0]))
+        db.execute('UPDATE inventory SET qty=?, fir=? WHERE item=?', (inv[0], inv[1], entry[0]))
 
     db. execute('SELECT name FROM quests WHERE name LIKE ?', (f'%{mission}%',))
     quest = db.fetchone()
