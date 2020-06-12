@@ -128,5 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# mine
+# my exceptions
+builds/
 backup.db
+blank.db

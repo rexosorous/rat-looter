@@ -87,6 +87,14 @@ def info(item: str):
 
     data = list(db.fetchone())
 
+    if not any(data):
+        # if we search for an item whose quests that require it are all completed, then the above query will only return NoneType
+        # we don't want the user thinking they typed an item name incorrectly if they haven't, so we print out a confirmation message
+        db.execute('''SELECT full_name FROM items WHERE full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?''', (f'%{item}%', f'%{item}%', f'%{item}%'))
+        item = db.fetchone()
+        print(f'you have completed all quests that require the item: {item[0]}')
+        return
+
     need = [data[3]-data[1], data[4]-data[2]]
     if need[1] < 0:
         need[0] += need[1]
@@ -331,7 +339,7 @@ def loop():
                 print('unknown command')
         except TypeError:
             print('error: that quest or item doesn\'t exist or you misspelled something.')
-            print('       periods and spaces must be included in.')
+            print('       periods and spaces must be included')
             print('       if it\'s a quest name, it must be exactly as it appears in game.')
         except ValueError:
             print('error: incorrect syntax.')
