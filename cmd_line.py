@@ -9,6 +9,13 @@ db = conn.cursor()
 
 
 def info(item: str):
+    '''Shows info regarding the quantities of an item.
+
+    Shows how much you need, how much is required, and how much you currently have for one particular item.
+
+    Args:
+        item (str): the item to get info on
+    '''
     db.execute('SELECT items.full_name, inventory.qty, inventory.fir, SUM(recipes.qty), SUM(recipes.fir) FROM items INNER JOIN recipes ON recipes.item=items.id INNER JOIN inventory ON inventory.item=items.id INNER JOIN quests ON quests.id=recipes.quest WHERE quests.completed=0 AND (full_name LIKE ? OR short_name LIKE ? OR alt_name LIKE ?)', (f'%{item}%', f'%{item}%', f'%{item}%'))
     data = list(db.fetchone())
 
@@ -26,6 +33,13 @@ def info(item: str):
 
 
 def add(qty: int, fir: int, item: str):
+    '''Adds a quantity of an item into your inventory.
+
+    Args:
+        qty (int): how much is to be added
+        fir (int): whether the item is found in raid (0 for no, 1 for yes)
+        item (str): the item we're adding
+    '''
     if not item:
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
@@ -44,6 +58,13 @@ def add(qty: int, fir: int, item: str):
 
 
 def set(qty: int, fir: int, item: str):
+    '''Adds a quantity of an item into your inventory.
+
+    Args:
+        qty (int): how much to set the value to
+        fir (int): whether the item is found in raid (0 for no, 1 for yes)
+        item (str): the item we're adding
+    '''
     if not item:
         print('incorrect number of arguments. syntax is: [qty] [fir status (y/n)] [item name]')
         return
@@ -60,6 +81,13 @@ def set(qty: int, fir: int, item: str):
 
 
 def complete(mission: str):
+    '''Completes a mission so we don't have to consider its requirements.
+
+    Not only completes the mission, but removes items from the player's inventory automatically.
+
+    Args:
+        mission (str): the mission to complete. MUST BE AS CLOSE AS POSSIBLE to the text in game
+    '''
     # check if the quest is already completed
     db.execute('SELECT name FROM quests WHERE name LIKE ? AND completed=1', (f'%{mission}%',))
     if (quest := db.fetchone()):
@@ -93,6 +121,10 @@ def complete(mission: str):
 
 
 def loop():
+    '''Main logic loop.
+
+    Continually asks for commands and calls the appropriate functions.
+    '''
     while True:
         try:
             command = input('enter command: ')
