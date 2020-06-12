@@ -257,6 +257,23 @@ def restart(mission: str):
 
 
 
+def wipe():
+    '''Completely wipes progress (inventory and quests).
+
+    Note:
+        Should only really be used when there's a wipe.
+    '''
+    decision = input('are you sure? this will COMPLETELY WIPE all of your progress!! (y/n): ')
+    if decision.lower() == 'y':
+        db.execute('''UPDATE inventory SET qty=0, fir=0''')
+        db.execute('''UPDATE quests SET completed=0''')
+        print('wipe completed.')
+        conn.commit()
+    else:
+        print('wipe canceled.')
+
+
+
 def loop():
     '''Main logic loop.
 
@@ -297,8 +314,7 @@ def loop():
             elif args[0].lower() == 'restart':
                 restart(' '.join(args[1:]))
             elif args[0].lower() == 'wipe':
-                # wipe()
-                pass
+                wipe()
             elif args[0].lower() == 'stop':
                 break
             else:
